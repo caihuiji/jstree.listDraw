@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="./jquery.js"></script>
+    <script src="./jstree.js"></script>
+    <script src="./jstree.listDraw.js"></script>
+    <link rel="stylesheet" href="./style.min.css">
+    <style>
+        ul {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="jstree_demo" style="height:200px;    overflow: scroll;" ></div>
+
+<script>
+
+
+</script>
+<script>
+    $('#jstree_demo').jstree({
+        "core" : {
+            "animation" : true,
+            "check_callback" : true,
+            "themes" : { "stripes" : true },
+            'data' : function (root , callback){
+                if(root.id == "#"){
+                    callback(
+                            [
+                                { "id" : "demo_root_1", "text" : "Root 1" , "type" : "root" , children : true },
+                                { "id" : "demo_root_2", "text" : "Root 2", "type" : "root" },
+                                { "id" : "demo_root_3", "text" : "Root 3", "type" : "root" },
+                                { "id" : "demo_root_4", "text" : "Root 4", "type" : "root" },
+                                { "id" : "demo_root_5", "text" : "Root 5", "type" : "root" },
+                                { "id" : "demo_root_6", "text" : "Root 6", "type" : "root" },
+                                { "id" : "demo_root_7", "text" : "Root 7", "type" : "root" },
+                                { "id" : "demo_root_8", "text" : "Root 8", "type" : "root" },
+                                { "id" : "demo_root_9", "text" : "Root 9", "type" : "root" },
+                                { "id" : "demo_root_10", "text" : "Root 10", "type" : "root" },
+                                { "id" : "demo_root_11", "text" : "Root 11", "type" : "root" },
+                                { "id" : "demo_root_12", "text" : "Root 12", "type" : "root" },
+                                { "id" : "demo_root_13", "text" : "Root 13", "type" : "root" },
+                                { "id" : "demo_root_14", "text" : "Root 14", "type" : "root" },
+                                { "id" : "demo_root_15", "text" : "Root 15", "type" : "root" },
+                                { "id" : "demo_root_16", "text" : "Root 16", "type" : "root" },
+                                { "id" : "demo_root_17", "text" : "Root 17", "type" : "root" },
+                                { "id" : "demo_root_18", "text" : "Root 18", "type" : "root" },
+                                { "id" : "demo_root_19", "text" : "Root 19", "type" : "root" },
+
+                            ])
+                }else {
+                    callback(
+                            [
+                                { "id" : "demo_child_1", "text" : "Child 1" },
+                                { "id" : "demo_child_2", "text" : "Child 2" },
+                                { "id" : "demo_child_3", "text" : "Child 3" },
+                                { "id" : "demo_child_4", "text" : "Child 4" },
+                                { "id" : "demo_child_5", "text" : "Child 5" },
+                                { "id" : "demo_child_6", "text" : "Child 6" },
+
+                            ])
+                }
+            }
+        },
+        "types" : {
+            "#" : {
+                "max_children" : 1,
+                "max_depth" : 4,
+                "valid_children" : ["root"]
+            },
+            "root" : {
+                "icon" : "/static/3.3.4/assets/images/tree_icon.png",
+                "valid_children" : ["default"]
+            },
+            "default" : {
+                "valid_children" : ["default","file"]
+            },
+            "file" : {
+                "icon" : "glyphicon glyphicon-file",
+                "valid_children" : []
+            }
+        },
+        plugins: ["listDraw"]
+    });
+</script>
+</body>
+</html>
