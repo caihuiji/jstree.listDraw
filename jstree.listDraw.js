@@ -105,10 +105,10 @@
 				eachTreeList(0, this.treeMap["#"].children)
 			},
 
-			moveAfterNode : function (targerPremer , offset){
+			moveAfterNode : function (premer , offset ){
 				queue.forEach(function (item){
-					if(item.premer > targerPremer){
-						item.el.style.top = item.premer * setting.height + offset + 'px'
+					if(item.premer > premer){
+						item.el.style.top = item.premer * setting.height +  offset + 'px';
 					}
 				})
 			},
@@ -135,32 +135,71 @@
 				viewItem.el.style.top = premer * setting.height + 'px';
 
 			},
-			redraw: function (reset) {
-
+			redraw: function () {
+				var direct = 1;
 				this.$el.find(".js_viewbox").css("height", ( (viewData.length * setting.height) + "px"));
 
 
-				var premer = 0;
+
+
+				premer = 0;
 				if (this.scrollTop < setting.height) {
 
 				} else {
-					premer = parseInt(this.scrollTop / setting.height);
+
+					if( this.scrollTop + setting.height*queue.length > viewData.length * setting.height){
+						direct = -1
+					}
+
+					if(direct > 0){
+						premer = parseInt(this.scrollTop / setting.height);
+					}else {
+						premer = viewData.length -1
+					}
+
 
 				}
-				for (var i = 0; i < queue.length; i++) {
-					var obj = viewData[premer];
-					this.redraw_node(obj, queue[i], premer);
-					premer++;
+				if(direct > 0){
+					for (var i = 0; i < queue.length; i++) {
+						var obj = viewData[premer];
+						this.redraw_node(obj, queue[i], premer);
+						premer++;
+					}
+					premer--;
+				}else {
+					for (var i =  queue.length -1; i >=0 ; i--) {
+						var obj = viewData[premer];
+						this.redraw_node(obj, queue[i], premer);
+						premer--;
+					}
+					premer = viewData.length -1
 				}
-				premer--;
+
+
 
 			},
 
 
 			scroll: function (event) {
 
+
 				var top = this.scrollTop;
+				event.data.scrollTop = top;
+				var index = queue[0].el.getAttribute('premer');
+				var lastIndex = queue[queue.length-1].el.getAttribute('premer');
+				//头尾都溢出 , 直接重置
+
+				if(
+					(top +queue.length*setting.height < (index * setting.height )  ||
+					top > (lastIndex * setting.height + setting.height))
+				){
+					event.data.redraw( );
+					direction = top;
+					return ;
+				}
 				if (top > 0) {
+
+
 
 					// 检测滚动条滚动的方向
 					if (top - direction > 0) {
@@ -169,29 +208,33 @@
 						// 向下滚动
 						// 如果滚动位置大于排头位置加二分之一
 						// var index = $(queue[0]).attr('premer');
-						var index = queue[0].el.getAttribute('premer');
+						var startDate = new Date - 0;
+
+
+						var count = 0 ;
 						while (top > (index * setting.height + setting.height) && premer + 1 < viewData.length) {
 							// <li class="js_hugeUl_item_1" premer="0" item_data="0" style="position: absolute; width: 100%; transform: translateY(0px);">1</li>
 
 							var elObj = queue.shift();
 							premer++;
-							console.log(premer)
+							//console.log(premer)
 
 							event.data.moveChild(elObj, 0);
 
 							queue.push(elObj);
 							index = queue[0].el.getAttribute('premer');
-						}
 
+						}
+						console.log(new Date - startDate ,"  - ", count);
 					} else if (top - direction < 0) {
 
-						var index = queue[0].el.getAttribute('premer');
+
 
 						while (top < (index * setting.height  ) && premer - 1 >= 0) {
 
 							var elObj = queue.pop();
 							premer--;
-							console.log(premer)
+							//console.log(premer)
 
 							event.data.moveChild(elObj, queueLength - 1);
 
@@ -206,12 +249,11 @@
 				} else {
 
 					// 为了填safari的弹性滚动的坑，这个坑是会产生scrollTop负值
-					var index = queue[0].el.getAttribute('premer');
 
 					while (index != 0) {
 						var elObj = queue.pop();
 						premer--;
-						console.log(premer)
+						//console.log(premer)
 
 						event.data.moveChild(elObj, queueLength - 1);
 
@@ -221,6 +263,8 @@
 				}
 				// 下面这句话会导致页面回流
 				// direction = this.scrollTop;
+
+
 			},
 			moveChild: function (elObj, shift) {
 				var el = elObj.el;
@@ -250,7 +294,7 @@
 				for (var i = 0; i < 10; i++) {
 					html.push('<li   class="js_viewbox_item jstree-node "  id="js_viewbox_item_' + (i + 1) + '" class="jstree-node  jstree-leaf"><i class="jstree-icon jstree-ocl" ></i><a class="jstree-anchor" href="#" tabindex="-1" ><i class="jstree-icon jstree-themeicon " ></i><span class="js_viewbox_name"></span></a></li>');
 				}
-				html.push('<li style="display: none;position: relative" class="js_viewbox_animate_item"><ul style="height:100px;" class="jstree-children"></ul></li>')
+				html.push('<li style="display: none;position: relative;list-style:none;" class="js_viewbox_animate_container"><ul style="position:absolute;bottom:0;" class="jstree-children js_viewbox_animate_list"></ul></li>')
 				this.element.empty().html('<ul style="position: relative;" class="js_viewbox">' + html.join("") + '</ul>');
 
 				viewbox.$el = this.element;
@@ -271,6 +315,42 @@
 			 */
 			this.trigger('redraw', {"nodes": nodes});
 		};
+
+		this.draw_childrenForAnimation = function (node , $animation ,direct) {
+			var obj = this.get_node(node),
+				i = false,
+				j = false,
+				k = false,
+				d = document;
+			if (!obj) {
+				return false;
+			}
+			node = this.get_node(node, true);
+			if (!node || !node.length) {
+				return false;
+			} // TODO: quick toggle
+
+			var node_obj = [];
+			for (var i = 0, j = obj.children.length; i < j; i++) {
+				node_obj.push(this.get_node(obj.children[i]));
+			}
+			if (obj.children.length && obj.state.loaded) {
+				var maxLength =  obj.children.length > 100 ? 99 : obj.children.length
+				if(direct > 0){
+					$animation.hide();
+				}else {
+					$animation.show();
+				}
+
+				var $animateList = $animation.find(".js_viewbox_animate_list");
+				$animation.css("height" ,maxLength*setting.height + "px");
+				$animation.find(".js_viewbox_animate_list").css("height" , maxLength*setting.height)
+				$animateList.html("")
+				for (var i = 0, j = obj.children.length; i < j && i < 100; i++) {
+					$animateList.append('<li class=" jstree-node jstree-leaf" style="margin-left:44px;"><i class="jstree-icon jstree-ocl"></i><a class="jstree-anchor" href="#" tabindex="-1"><i class="jstree-icon jstree-themeicon "></i><span class="js_viewbox_name">'+this.get_node(obj.children[i]).text+'</span></a></li>');
+				}
+			}
+		}
 
 		this.draw_children = function (node) {
 			var obj = this.get_node(node),
@@ -337,15 +417,32 @@
 				this.trigger("after_close", {"node": obj});
 			}
 			else {
-				if (!animation) {
+				//if (!animation) {
 					d[0].className = d[0].className.replace('jstree-open', 'jstree-closed');
 //                    d.attr("aria-expanded", false).children('.jstree-children').remove();
 					viewbox.setData(obj.id, [])
 					viewbox.redraw();
-					this.trigger("after_close", {"node": obj});
-				}
-				else {
-					d.after('<li style="display: none;" class=""><ul class="jstree-children" style="height:500px;"></ul></li>')
+					//this.trigger("after_close", {"node": obj});
+				//}
+				//else {
+				//this.trigger('before_open', {"node": obj});
+				var premer = d.attr("premer") ;
+				this.element.find(".js_viewbox_animate_container").css("top" , d.position().top+24)
+				this.draw_childrenForAnimation( d, this.element.find(".js_viewbox_animate_container") ,-1);
+				viewbox.moveAfterNode(premer ,this.element.find(".js_viewbox_animate_container").height()  )
+				this.element.find(".js_viewbox_animate_container")
+					.slideUp({
+						progress : function (){
+							viewbox.moveAfterNode(premer , $(this).height()  )
+						} ,
+						complete : function (){
+							//t.draw_children(obj);
+							t.element.find(".js_viewbox_animate_list").html("");
+							t.element.find(".js_viewbox_animate_container").hide();
+						},
+						speed :animation});
+
+					//d.after('<li style="display: none;" class=""><ul class="jstree-children" style="height:500px;"></ul></li>')
 						/*  .children(".jstree-children").attr("style", "display:block !important").end()
 						 .removeClass("jstree-open").addClass("jstree-closed").attr("aria-expanded", false)
 						 .children(".jstree-children").stop(true, true).slideUp(animation, function () {
@@ -355,7 +452,7 @@
 						 t.trigger("after_close", {"node": obj});
 						 }
 						 })*/;
-				}
+				//}
 			}
 		};
 
@@ -409,13 +506,19 @@
 					else {
 						this.trigger('before_open', {"node": obj});
 						var premer = d.attr("premer") ;
-						this.element.find(".js_viewbox_animate_item")
-							.slideDown({progress : function (){
-
-								viewbox.moveAfterNode(premer , $(this).height())
-							} , speed :animation}, function () {
-
-							});
+						this.element.find(".js_viewbox_animate_container").css("top" , d.position().top+24)
+						this.draw_childrenForAnimation( d, this.element.find(".js_viewbox_animate_container") , 1);
+						this.element.find(".js_viewbox_animate_container")
+							.slideDown({
+								progress : function (){
+								viewbox.moveAfterNode(premer , $(this).height() )
+								} ,
+								complete : function (){
+									t.draw_children(obj);
+									t.element.find(".js_viewbox_animate_list").html("");
+									t.element.find(".js_viewbox_animate_container").hide();
+								},
+								speed :animation});
 						/* d
 						 .children(".jstree-children").css("display", "none").end()
 						 .removeClass("jstree-closed").addClass("jstree-open").attr("aria-expanded", true)

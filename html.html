@@ -30,9 +30,9 @@
                 if(root.id == "#"){
                     callback(
                             [
-                                { "id" : "demo_root_1", "text" : "Root 1" , "type" : "root" , children : true },
+                                { "id" : "demo_root_1", "text" : "Root 1" , "type" : "root"},
                                 { "id" : "demo_root_2", "text" : "Root 2", "type" : "root" },
-                                { "id" : "demo_root_3", "text" : "Root 3", "type" : "root" },
+                                { "id" : "demo_root_3", "text" : "Root 3", "type" : "root" , children : true  },
                                 { "id" : "demo_root_4", "text" : "Root 4", "type" : "root" },
                                 { "id" : "demo_root_5", "text" : "Root 5", "type" : "root" },
                                 { "id" : "demo_root_6", "text" : "Root 6", "type" : "root" },
@@ -52,16 +52,13 @@
 
                             ])
                 }else {
-                    callback(
-                            [
-                                { "id" : "demo_child_1", "text" : "Child 1" },
-                                { "id" : "demo_child_2", "text" : "Child 2" },
-                                { "id" : "demo_child_3", "text" : "Child 3" },
-                                { "id" : "demo_child_4", "text" : "Child 4" },
-                                { "id" : "demo_child_5", "text" : "Child 5" },
-                                { "id" : "demo_child_6", "text" : "Child 6" },
 
-                            ])
+                    var children = []
+                            for(var i = 0 ; i < 30000 ; i ++){
+                                children.push( { "id" : "demo_child_" + (i + 1) , "text" : "Child "  + (i + 1) })
+                            }
+
+                    callback(children      )
                 }
             }
         },
