@@ -32,14 +32,13 @@
 
 		var viewbox = {
 			$el: null,
-			treeMap: {},  //   用于映射
+			jstree: jstree,  //   用于映射
 			scrollTop: 0,
 			init: function (option) {
 				var self = this;
 				viewbox.$el.scroll(self, self.scroll);
 
-				var rootNode = {children: []}
-				this.treeMap["#"] = rootNode;
+		
 
 				direction = 0;
 				queue = [];
@@ -71,16 +70,16 @@
 				premer--;
 			},
 			setData: function (id, data) {
-				var self = this;
+				// var self = this;
 
-				if (this.treeMap[id]) {
-					this.treeMap[id].children = data;
-					data.forEach(function (item) {
-						self.treeMap[item.id] = item;
-					});
-				}
+				// if (this.treeMap[id]) {
+				// 	this.treeMap[id].children = data;
+				// 	data.forEach(function (item) {
+				// 		self.treeMap[item.id] = item;
+				// 	});
+				// }
 
-				setting.length = this.treeMap[id].children.length;
+				// setting.length = this.treeMap[id].children.length;
 
 				this.toListView();
 
@@ -90,19 +89,27 @@
 
 			toListView: function () {
 				viewData = [];
+				var self = this;
 				var eachTreeList = function (level, data) {
 					level++;
-					data.forEach(function (item) {
-						item.level = level;
-						viewData.push(item)
-						if (item.children.length) {
-							eachTreeList(level, item.children)
-						}
-					})
+					if(data && data.length){
+						data.forEach(function (item) {
+							
+							item = self.jstree.get_node(item);
+							
+							
+							item.level = level;
+							viewData.push(item)
+							if (item.children.length && item.state.opened) {
+								eachTreeList(level, item.children)
+							}
+						})
+					}
+					
 
 				}
 
-				eachTreeList(0, this.treeMap["#"].children)
+				eachTreeList(0,  self.jstree.get_node("#").children)
 			},
 
 			moveAfterNode : function (premer , offset ){
@@ -114,6 +121,12 @@
 			},
 
 			redraw_node: function (obj, viewItem, premer) {
+				if(!obj){
+					viewItem.el.style.display = "none"
+					return ;
+				}else {
+					viewItem.el.style.display = "block"
+				}
 				var c = ' jstree-node';
 				if (obj.state.hidden) {
 					c += ' jstree-hidden';
@@ -291,18 +304,21 @@
 
 			if (this._model.force_full_redraw) {
 				var html = []
-				for (var i = 0; i < 10; i++) {
+				for (var i = 0; i < parseInt(this.element.parent().height()/28 +2); i++) {
 					html.push('<li   class="js_viewbox_item jstree-node "  id="js_viewbox_item_' + (i + 1) + '" class="jstree-node  jstree-leaf"><i class="jstree-icon jstree-ocl" ></i><a class="jstree-anchor" href="#" tabindex="-1" ><i class="jstree-icon jstree-themeicon " ></i><span class="js_viewbox_name"></span></a></li>');
 				}
 				html.push('<li style="display: none;position: relative;list-style:none;" class="js_viewbox_animate_container"><ul style="position:absolute;bottom:0;" class="jstree-children js_viewbox_animate_list"></ul></li>')
 				this.element.empty().html('<ul style="position: relative;" class="js_viewbox">' + html.join("") + '</ul>');
 
-				viewbox.$el = this.element;
+				viewbox.$el = this.element.parent();
 				viewbox.init({height: 24});
+
+				viewbox.jstree = this;
+				viewbox.toListView();
 
 //                f.insetHTML =;
 				//this.get_container_ul()[0].appendChild(f);
-				viewbox.setData("#", node_obj);
+				//viewbox.setData("#", node_obj);
 				viewbox.redraw()
 			}
 			this._model.force_full_redraw = false;
@@ -374,7 +390,8 @@
 				node_obj.push(this.get_node(obj.children[i]));
 			}
 			if (obj.children.length && obj.state.loaded) {
-				viewbox.setData(obj.id, node_obj);
+				//viewbox.setData(obj.id, node_obj);
+				viewbox.toListView();
 				viewbox.redraw()
 			}
 		}
@@ -439,6 +456,9 @@
 							//t.draw_children(obj);
 							t.element.find(".js_viewbox_animate_list").html("");
 							t.element.find(".js_viewbox_animate_container").hide();
+							if (t.element) {
+								t.trigger("after_close", { "node" : obj });
+							}
 						},
 						speed :animation});
 
@@ -517,6 +537,10 @@
 									t.draw_children(obj);
 									t.element.find(".js_viewbox_animate_list").html("");
 									t.element.find(".js_viewbox_animate_container").hide();
+
+									  if (t.element) {
+                                        t.trigger("after_open", { "node" : obj });
+                                    }
 								},
 								speed :animation});
 						/* d
